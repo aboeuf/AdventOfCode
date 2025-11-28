@@ -211,6 +211,10 @@ MainWindow::MainWindow(QWidget *parent)
   m_icon = QIcon(":/icon.png");
   this->setWindowIcon(m_icon);
 
+  m_manager = new QNetworkAccessManager(this);
+  connect(m_manager, SIGNAL(finished(QNetworkReply *)), this,
+          SLOT(replyFinished(QNetworkReply *)));
+
   for (auto y : m_solvers.m_solvers.keys())
     for (auto d : m_solvers.m_solvers[y].keys())
       for (auto p : m_solvers.m_solvers[y][d].keys())
@@ -253,10 +257,6 @@ MainWindow::MainWindow(QWidget *parent)
   ui->m_check_box_use_last_input->setChecked(m_config.m_use_last_input);
 
   fillComboBox();
-
-  m_manager = new QNetworkAccessManager(this);
-  connect(m_manager, SIGNAL(finished(QNetworkReply *)), this,
-          SLOT(replyFinished(QNetworkReply *)));
 
   updateLeaderboardDisplay();
 }
@@ -385,6 +385,7 @@ void MainWindow::on_m_push_button_update_cookies_clicked() {
 
 void MainWindow::on_m_spin_box_year_valueChanged(int) {
   ui->m_check_box_use_last_input->setChecked(false);
+  ui->m_spin_box_day->setMaximum(ui->m_spin_box_year->value() == 2025 ? 12 : 25);
   updateLeaderboardDisplay();
 }
 

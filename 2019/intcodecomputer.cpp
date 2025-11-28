@@ -4,7 +4,7 @@
 
 namespace event_2019 {
 
-Int State::get(const Int address) const {
+Int State::get(const Int address, const QChar & /*mode*/) const {
   const auto it = m_memory.constFind(address);
   if (it == m_memory.cend()) {
     common::throwInvalidArgumentError(
@@ -37,11 +37,22 @@ void State::reset(const QVector<Int> &values) {
 Instruction::Instruction(const Int nb_parameters)
     : m_nb_parameters{nb_parameters} {}
 
-QVector<Int> Instruction::getParameters(const State &state) {
+QVector<Int> Instruction::getParameters(const QString &parameters_modes,
+                                        const State &state) {
+  auto it_mode = parameters_modes.crbegin();
+  const auto get_next_mode = [&it_mode, &parameters_modes]() {
+    if (it_mode == parameters_modes.crend()) {
+      return QChar('0');
+    }
+    const auto mode = *it_mode;
+    ++it_mode;
+    return mode;
+  };
   auto parameters = QVector<Int>();
   parameters.reserve(m_nb_parameters);
   for (auto i = Int(1); i <= m_nb_parameters; ++i) {
-    parameters << state.get(state.pointer() + i);
+    const auto mode = get_next_mode();
+    parameters << state.get(state.pointer() + i, mode);
   }
   return parameters;
 }
@@ -50,11 +61,9 @@ QVector<Int> Instruction::getParameters(const State &state) {
 
 Addition::Addition() : Instruction{Int(3)} {}
 
-void Addition::apply(State &state) {
-  const auto parameters = getParameters(state);
-  const auto lhs = state.get(parameters[0]);
-  const auto rhs = state.get(parameters[1]);
-  state.set(parameters[2], lhs + rhs);
+void Addition::apply(const QString &parameters_modes, State &state) {
+  const auto parameters = getParameters(parameters_modes, state);
+  state.set(parameters[2], parameters[0] + parameters[1]);
   state.jump(Int(4));
 }
 
@@ -62,19 +71,35 @@ void Addition::apply(State &state) {
 
 Multiplication::Multiplication() : Instruction{Int(3)} {}
 
-void Multiplication::apply(State &state) {
-  const auto parameters = getParameters(state);
-  const auto lhs = state.get(parameters[0]);
-  const auto rhs = state.get(parameters[1]);
-  state.set(parameters[2], lhs * rhs);
+void Multiplication::apply(const QString &parameters_modes, State &state) {
+  const auto parameters = getParameters(parameters_modes, state);
+  state.set(parameters[2], parameters[0] * parameters[1]);
   state.jump(Int(4));
 }
 
 /******************************************************************************/
 
-const auto instructions = QHash<Int, std::shared_ptr<Instruction>>{
-    {Int(1), std::make_shared<Addition>()},
-    {Int(2), std::make_shared<Multiplication>()}};
+const auto instructions = QHash<QString, std::shared_ptr<Instruction>>{
+    {"01", std::make_shared<Addition>()},
+    {"02", std::make_shared<Multiplication>()}};
+
+bool applyCurrent(State &state) {
+  auto parameters_modes =
+      QString("%1").arg(state.get(state.pointer(), '1'), 2, 10, QChar('0'));
+  const auto opcode = parameters_modes.mid(parameters_modes.size() - 2);
+  if (opcode == "99") {
+    return false;
+  }
+  const auto it = instructions.constFind(opcode);
+  if (it == instructions.cend()) {
+    common::throwInvalidArgumentError(
+        QString("event_2019::appyCurrent: unrecognized opcode \"%1\"")
+            .arg(opcode));
+  }
+  parameters_modes.chop(2);
+  (*it)->apply(parameters_modes, state);
+  return true;
+}
 
 /******************************************************************************/
 
@@ -92,17 +117,7 @@ void IntcodeComputer::set(const Int address, const Int value) {
 }
 
 void IntcodeComputer::run() {
-  for (;;) {
-    const auto opcode = m_state.get(m_state.pointer());
-    if (opcode == Int(99)) {
-      return;
-    }
-    const auto instruction = instructions.constFind(opcode);
-    if (instruction == instructions.cend()) {
-      common::throwRunTimeError(
-          QString("event_2019::IntodeComputer: bad opcode %1").arg(opcode));
-    }
-    (*instruction)->apply(m_state);
+  while (applyCurrent(m_state)) {
   }
 }
 

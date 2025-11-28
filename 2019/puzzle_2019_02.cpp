@@ -16,7 +16,7 @@ public:
     m_computer.set(1, first_input);
     m_computer.set(2, second_input);
     m_computer.run();
-    return QString("%1").arg(m_computer.state().get(0));
+    return QString("%1").arg(m_computer.state().get(0, '1'));
   }
 
   QString solve() {

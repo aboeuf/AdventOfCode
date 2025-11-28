@@ -12,7 +12,7 @@ using Memory = QHash<Int, Int>;
 
 class State {
 public:
-  Int get(Int address) const;
+  Int get(Int address, const QChar &) const;
   void set(Int address, Int value);
 
   Int pointer() const;
@@ -32,10 +32,9 @@ class Instruction {
 public:
   Instruction(Int nb_parameters);
   virtual ~Instruction() = default;
-
-  QVector<Int> getParameters(const State &state);
-
-  virtual void apply(State &state) = 0;
+  QVector<Int> getParameters(const QString &parameters_modes,
+                             const State &state);
+  virtual void apply(const QString &parameters_modes, State &state) = 0;
 
 private:
   Int m_nb_parameters;
@@ -46,7 +45,7 @@ private:
 class Addition : public Instruction {
 public:
   Addition();
-  void apply(State &state) final;
+  void apply(const QString &parameters_modes, State &state) final;
 };
 
 /******************************************************************************/
@@ -54,7 +53,7 @@ public:
 class Multiplication : public Instruction {
 public:
   Multiplication();
-  void apply(State &state) final;
+  void apply(const QString &parameters_modes, State &state) final;
 };
 
 /******************************************************************************/
