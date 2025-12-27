@@ -1,0 +1,4 @@
+browser_cookie3
+bs4
+PySide6
+requests
