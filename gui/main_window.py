@@ -15,12 +15,13 @@ if PY_SOLVERS_DIR not in sys.path:
 
 import aoc
 from .configuration import Configuration
-from .dialogs import StandardBoxes
+from .dialogs import NewInputDialog, StandardBoxes
 from .icons import Icons
+from .icons_delegate import IconsDelegate
 from .paths import PACKAGE_DIR, get_parent_dirpath
-from PySide6.QtCore import QTimer
-from PySide6.QtGui import QColor, QKeySequence, QPalette
-from PySide6.QtWidgets import QFileDialog, QMainWindow
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QColor, QKeySequence, QPalette, QStandardItem, QStandardItemModel
+from PySide6.QtWidgets import QFileDialog, QHeaderView, QMainWindow, QTableWidgetItem
 from .session import Session
 from solvers import Solvers
 from traceback import print_exception
@@ -49,22 +50,33 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.web_engine_view.setContextMenuPolicy(Qt.NoContextMenu)
+
+        self.nb_examples = 0
+        self.output = ""
+        self.input = ""
+        self.custom_input = False
 
         self.icons = Icons()
         self.setWindowIcon(self.icons["aoc"])
         self.boxes = StandardBoxes(self.icons["aoc"])
+        self.refresh_push_button.setIcon(self.icons["refresh"])
+        self.copy_part_one_push_button.setIcon(self.icons["copy"])
+        self.copy_part_two_push_button.setIcon(self.icons["copy"])
+        self.new_input_push_button.setIcon(self.icons["new"])
+        self.delete_input_push_button.setIcon(self.icons["delete"])
 
         self.config = None
-        cookies = get_cookies_from_chrome()
+        self.cookies = get_cookies_from_chrome()
         test_cookies = get_url(
-            f"https://{DOMAIN_NAME}/2015/day/1/input", timeout=5.0, cookies=cookies
+            f"https://{DOMAIN_NAME}/2015/day/1/input", timeout=5.0, cookies=self.cookies
         )
         if test_cookies is None or test_cookies.status_code != 200:
             self.boxes.warn("\n".join(NO_COOKIES_ERROR_MESSAGE))
             return
 
         self.config = Configuration()
-        self.session = Session(self.config, cookies)
+        self.session = Session(self.config, self.cookies)
 
         session_filepath = self.config["session_path"]
         if session_filepath is not None:
@@ -80,18 +92,38 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.update_title()
 
+        self.inputs_combo_box.addItem("[AOC] perso")
+        self.io_combo_box.addItem("Input")
+        self.io_combo_box.addItem("Output")
+
         self.py_solvers = Solvers()
 
         self.action_open.triggered.connect(self.load_session)
         self.action_save.triggered.connect(self.save_session)
         self.action_save_as.triggered.connect(self.save_session_as)
+        self.action_refresh_session.triggered.connect(lambda: self.download_session(clear=True))
         self.year_combo_box.currentIndexChanged.connect(self.on_year_changed)
         self.day_combo_box.currentIndexChanged.connect(self.on_day_changed)
+        self.io_combo_box.currentIndexChanged.connect(self.on_io_changed)
+        self.inputs_combo_box.currentIndexChanged.connect(self.on_input_changed)
+        self.refresh_push_button.clicked.connect(self.refresh_problem)
+        self.new_input_push_button.clicked.connect(self.new_input)
+        self.delete_input_push_button.clicked.connect(self.delete_input)
+        self.io_plain_text_edit.textChanged.connect(self.on_custom_input_text_changed)
 
         self.action_open.setShortcut(QKeySequence("Ctrl+O"))
         self.action_save.setShortcut(QKeySequence("Ctrl+S"))
+        self.action_refresh_session.setShortcut(QKeySequence("Ctrl+U"))
 
-        QTimer.singleShot(0, self.ask_download_session)
+        self.overview_table_view.setItemDelegate(IconsDelegate())
+        header = self.overview_table_view.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeToContents)
+
+        QTimer.singleShot(0, self.bootstrap)
+
+    def bootstrap(self):
+        self.set_splitter_ratio()
+        self.ask_download_session()
 
     def closeEvent(self, event):
         if self.config is not None:
@@ -114,6 +146,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         super().resizeEvent(event)
         self.set_splitter_ratio()
 
+    def show_status(self, message):
+        current = self.status_bar.currentMessage()
+        self.status_bar.showMessage(
+            "{} | {}".format(current, message) if current else message, timeout=2000
+        )
+
     def update_title(self):
         title = "Advent of Code"
         if self.session.modified or self.config["session_path"] is not None:
@@ -135,11 +173,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def set_splitter_ratio(self):
         ratio = self.config["splitter_ratio"]
-        if ratio < 0. or ratio > 1.:
+        if ratio < 0.0 or ratio > 1.0:
             raise ValueError(f"bad ratio value {ratio}")
         total_width = self.splitter.width()
         if total_width == 0:
-            raise ValueError("set_splitter_ratio called before main window is displayed")
+            raise ValueError(
+                "set_splitter_ratio called before main window is displayed"
+            )
         left_size = int(total_width * ratio)
         right_size = total_width - left_size
         self.splitter.setSizes([left_size, right_size])
@@ -156,14 +196,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.year_combo_box.blockSignals(False)
         self.on_year_changed()
 
-    def ask_download_session(self):
+    def ask_download_session(self, nb_missed=None):
         nb_missing_problems = len(self.session.get_missing_problems())
         if nb_missing_problems == 0:
             self.update_year_combo_box()
+            self.update_overview()
             return
         if self.boxes.ask(
             "Missing Puzzles",
-            "Your session has {} missing puzzle{}.\nDo you want to download {}?".format(
+            "{}our session {}has {} missing puzzle{}.\nDo you want to download {}?".format(
+                "Y" if nb_missed is None else "Because of some download failures, y",
+                "" if nb_missed is None else "still ",
                 "one" if nb_missing_problems == 1 else nb_missing_problems,
                 "s" if nb_missing_problems > 1 else "",
                 "them" if nb_missing_problems > 1 else "it",
@@ -172,6 +215,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.download_session()
         else:
             self.update_year_combo_box()
+        self.update_overview()
 
     def download_session(self, clear=False):
         if clear:
@@ -180,6 +224,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.session.download(self, problems)
         self.update_title()
         self.update_year_combo_box()
+        self.session.clean()
+        nb_missed = len(problems) - len(self.session.get_missing_problems())
+        if nb_missed > 0:
+            self.ask_download_session(nb_missed)
 
     def load_session(self):
         dirpath = (
@@ -193,8 +241,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if len(filepath) == 0:
             return
         self.session.load(filepath)
+        self.session.clean()
         self.update_title()
-        self.update_year_combo_box()
+        self.ask_download_session()
 
     def save_session_as(self):
         dirpath = (
@@ -216,6 +265,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             self.session.save()
             self.update_title()
+
+    def touch_session(self):
+        self.session.modified = True
+        self.update_title()
 
     def current_problem(self):
         return self.session[self.config["year"]][self.config["day"]]
@@ -251,3 +304,168 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         palette = self.solver_label.palette()
         palette.setColor(QPalette.ColorRole.WindowText, QColor(color))
         self.solver_label.setPalette(palette)
+        self.show_input()
+        self.update_inputs()
+        self.show_status(
+            "Problem ({}, {}) : ({} ex, {} cust)".format(
+                self.config["year"],
+                self.config["day"],
+                len(problem["aoc_example_inputs"]) if "aoc_example_inputs" in problem else 0,
+                len(problem["custom_inputs"]) if "custom_inputs" in problem else 0,
+            )
+        )
+
+    def show_input(self):
+        self.io_combo_box.blockSignals(True)
+        self.io_combo_box.setCurrentIndex(0)
+        self.io_combo_box.blockSignals(False)
+        self.on_io_changed()
+
+    def show_output(self):
+        self.io_combo_box.blockSignals(True)
+        self.io_combo_box.setCurrentIndex(1)
+        self.io_combo_box.blockSignals(False)
+        self.on_io_changed()
+
+    def on_io_changed(self):
+        is_input = self.io_combo_box.currentIndex() == 0
+        self.inputs_combo_box.setEnabled(is_input)
+        self.new_input_push_button.setEnabled(is_input)
+        self.delete_input_push_button.setEnabled(is_input)
+        self.io_plain_text_edit.blockSignals(True)
+        self.io_plain_text_edit.clear()
+        if is_input:
+            self.io_plain_text_edit.appendPlainText(self.input)
+            self.io_plain_text_edit.setReadOnly(not self.custom_input)
+            self.delete_input_push_button.setEnabled(self.custom_input)
+        else:
+            self.io_plain_text_edit.appendPlainText(self.output)
+            self.io_plain_text_edit.setReadOnly(True)
+        self.io_plain_text_edit.blockSignals(False)
+
+    def update_inputs(self, set_to_custom=None):
+        problem = self.current_problem()
+        self.inputs_combo_box.blockSignals(True)
+        while self.inputs_combo_box.count() > 1:
+            self.inputs_combo_box.removeItem(self.inputs_combo_box.count() - 1)
+        self.nb_examples = len(problem["aoc_example_inputs"])
+        if self.nb_examples > 1:
+            for i in range(self.nb_examples):
+                self.inputs_combo_box.addItem(f"[AOC] example #{i + 1}")
+        elif self.nb_examples > 0:
+            self.inputs_combo_box.addItem(f"[AOC] example")
+        if "custom_inputs" in problem:
+            for name in sorted(problem["custom_inputs"].keys()):
+                self.inputs_combo_box.addItem(name)
+        if set_to_custom is None:
+            self.inputs_combo_box.setCurrentIndex(0)
+        else:
+            index = self.inputs_combo_box.findText(set_to_custom)
+            if index < 0:
+                self.inputs_combo_box.setCurrentIndex(0)
+            else:
+                self.inputs_combo_box.setCurrentIndex(index)
+        self.inputs_combo_box.blockSignals(False)
+        self.on_input_changed()
+
+    def on_input_changed(self):
+        self.part_one_line_edit.clear()
+        self.part_two_line_edit.clear()
+        self.io_plain_text_edit.blockSignals(True)
+        self.io_plain_text_edit.clear()
+        self.io_plain_text_edit.blockSignals(False)
+        self.input = ""
+        self.output = ""
+        self.custom_input = self.inputs_combo_box.currentIndex() > self.nb_examples
+        self.delete_input_push_button.setEnabled(self.custom_input)
+        self.read_only = not self.custom_input
+        problem = self.current_problem()
+        if self.inputs_combo_box.currentIndex() == 0:
+            self.input = problem["aoc_personal_input"]
+        elif self.custom_input:
+            self.input = problem["custom_inputs"][self.inputs_combo_box.currentText()]
+        else:
+            self.input = problem["aoc_example_inputs"][
+                self.inputs_combo_box.currentIndex() - 1
+            ]
+        self.show_input()
+
+    def refresh_problem(self):
+        problem = self.current_problem()
+        try:
+            problem.download(self.cookies)
+            if problem.error is not None:
+                raise Exception(problem.error)
+            self.show_status("Problem downloaded")
+        except Exception as exc:
+            print_exception(exc)
+            self.boxes.warn("Failed to download problem with exception:\n" + str(exc))
+            self.show_status("Download failure")
+        self.on_day_changed()
+        self.touch_session()
+        self.update_overview()
+
+    def update_overview(self):
+        rows = 25
+        years = sorted(self.session.keys())
+        cols = len(years)
+        model = QStandardItemModel(rows, cols)
+        model.setHorizontalHeaderLabels([str(year) for year in years])
+        for col in range(cols):
+            year = years[col]
+            for day in sorted(self.session[year].keys()):
+                row = day - 1
+                problem = self.session[year][day]
+                nb_stars = problem.nb_stars()
+                item = QStandardItem()
+                icons = [
+                    self.icons["{}_star".format("green" if nb_stars == 2 else ("orange" if nb_stars == 1 else "red"))],
+                    self.icons["{}cpp".format("" if aoc.has_solver(year, day) else "no_")],
+                    self.icons["{}python".format("" if self.py_solvers.has(year, day) else "no_")],
+                ]
+                item.setData(icons, Qt.UserRole)
+                model.setItem(row, col, item)
+        self.overview_table_view.setModel(model)
+
+    def new_input(self):
+        dialog = NewInputDialog(self.inputs_combo_box)
+        if not dialog.exec():
+            return
+        name = dialog.get_name()
+        if not dialog.valid():
+            return warn(f'Invalid input name "{name}".')
+        problem = self.current_problem()
+        if problem.has_custom_input_with_name(name):
+            return warn(f'Problem already has an input with name "{name}".')
+        input = ""
+        if dialog.duplicate_check_box.isChecked():
+            if dialog.inputs_combo_box.currentIndex() == 0:
+                input = problem.aoc_personal_input
+            elif dialog.inputs_combo_box.currentIndex() - 1 < len(problem.aoc_example_inputs):
+                input = problem.aoc_example_inputs[dialog.inputs_combo_box.currentIndex() - 1]
+            else:
+                input = problem.custom_inputs[dialog.inputs_combo_box.currentText()]
+        problem.custom_inputs[name] = input
+        self.update_inputs(set_to_custom=name)
+        self.touch_session()
+
+    def delete_input(self):
+        problem = self.current_problem()
+        index = self.inputs_combo_box.currentIndex()
+        if not self.custom_input or index <= len(problem.aoc_example_inputs):
+            return warn("Can only delete a custom input.")
+        if not ask("Delete current input?", "Are you sure?"):
+            return
+        del problem.custom_inputs[self.inputs_combo_box.currentText()]
+        self.inputs_combo_box.blockSignals(True)
+        self.inputs_combo_box.removeItem(index)
+        self.inputs_combo_box.blockSignals(False)
+        self.update_inputs()
+        self.touch_session()
+
+    def on_custom_input_text_changed(self):
+        if self.custom_input:
+            problem = self.current_problem()
+            self.input = self.io_plain_text_edit.toPlainText()
+            problem.custom_inputs[self.inputs_combo_box.currentText()] = self.input
+            self.touch_session()

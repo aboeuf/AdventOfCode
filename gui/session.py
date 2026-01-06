@@ -30,12 +30,20 @@ class Session(dict):
         self.modified = False
         self.cookies = cookies
 
+    def clean(self):
+        for year in self.keys():
+            for day in self[year]:
+                if self[year][day].error is not None:
+                    del self[year][day]
+            if len(self[year]) == 0:
+                del self[year]
+
     def get_missing_problems(self):
         now = get_now()
         missing_problems = []
         for year in range(STARTING_YEAR, now.year + 1):
             for day in range(1, get_nb_puzzles_per_year(year) + 1):
-                if year == now.year and day > now.day:
+                if year == now.year and (now.month != 12 or day > now.day):
                     continue
                 if (
                     year not in self
@@ -84,6 +92,7 @@ class Session(dict):
                     self[year][day] = Problem(year, day, data=problem_data)
         self.modified = False
         self.config["session_path"] = filepath
+        self.clean()
 
     def export(self, filepath):
         with open(filepath, "w") as file:

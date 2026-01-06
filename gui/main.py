@@ -7,7 +7,6 @@ def main():
     app = QApplication(sys.argv if sys.argv else [])
     window = MainWindow()
     window.show()
-    window.set_splitter_ratio()
     if window.config is None:
         window.close()
     else:

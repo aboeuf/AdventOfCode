@@ -16,6 +16,12 @@ class Problem(dict):
         self.day = int(day)
         self.set_data(data)
 
+    def solved(self):
+        return "solved" in self and self["solved"]
+
+    def nb_stars(self):
+        return 2 if self.solved() else len(self["answers"])
+
     def set_data(self, data):
         self.clear()
         self.error = "no data" if data is None else None
@@ -48,14 +54,14 @@ class Problem(dict):
             soup = BeautifulSoup(problem_response.text, "html.parser")
             main_content = soup.find("main")
             result = ['<div class="status">']
-            solved = False
+            self["solved"] = False
             for child in main_content.children:
                 keep_child = False
                 if child.name == "p":
                     text = child.get_text(strip=True)
                     both_parts = text.startswith(BOTH_PARTS_TEXT)
                     if both_parts:
-                        solved = True
+                        self["solved"] = True
                     is_answer = text.startswith(ANSWER_FIRST_TEXT)
                     if is_answer:
                         grandchildren = [
@@ -85,7 +91,22 @@ class Problem(dict):
             result[0] += "</div>"
             self["html"] = "".join(result)
             self["aoc_example_inputs"] = []
-            pre_content = soup.find("pre")
+            pre_content = soup.find_all("pre")
             if pre_content is not None:
                 for input_example in pre_content:
                     self["aoc_example_inputs"].append(input_example.get_text(strip=True))
+
+    def has_custom_input_with_name(self, name):
+        return "custom_inputs" in self and name in self["custom_inputs"]
+
+    def add_custom_input(self, name, data):
+        if self.has_custom_input_with_name(name):
+            raise ValueError(f"problem already has a custom input with name '{name}'")
+        if "custom_inputs" not in self:
+            self["custom_inputs"] = {}
+        self["custom_inputs"][name] = data
+
+    def get_custom_input(self, name):
+        if not self.has_custom_input_with_name(name):
+            raise KeyError(f"problem doesn't have a custom input with name '{name}'")
+        return self["custom_inputs"][name]

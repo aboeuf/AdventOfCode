@@ -17,10 +17,11 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
 from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtWidgets import (QApplication, QComboBox, QHBoxLayout, QLabel,
-    QLineEdit, QMainWindow, QMenu, QMenuBar,
-    QPlainTextEdit, QPushButton, QSizePolicy, QSpacerItem,
-    QSplitter, QTabWidget, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QHBoxLayout,
+    QHeaderView, QLabel, QLineEdit, QMainWindow,
+    QMenu, QMenuBar, QPlainTextEdit, QPushButton,
+    QSizePolicy, QSpacerItem, QSplitter, QStatusBar,
+    QTabWidget, QTableView, QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -33,8 +34,10 @@ class Ui_MainWindow(object):
         self.action_save.setObjectName(u"action_save")
         self.action_save_as = QAction(MainWindow)
         self.action_save_as.setObjectName(u"action_save_as")
-        self.action_refresh = QAction(MainWindow)
-        self.action_refresh.setObjectName(u"action_refresh")
+        self.action_refresh_session = QAction(MainWindow)
+        self.action_refresh_session.setObjectName(u"action_refresh_session")
+        self.action_refresh_problem = QAction(MainWindow)
+        self.action_refresh_problem.setObjectName(u"action_refresh_problem")
         self.central_widget = QWidget(MainWindow)
         self.central_widget.setObjectName(u"central_widget")
         self.central_widget_layout = QVBoxLayout(self.central_widget)
@@ -43,6 +46,7 @@ class Ui_MainWindow(object):
         self.central_widget_layout.setContentsMargins(5, 5, 5, 5)
         self.tab_widget = QTabWidget(self.central_widget)
         self.tab_widget.setObjectName(u"tab_widget")
+        self.tab_widget.setTabsClosable(False)
         self.problem_tab = QWidget()
         self.problem_tab.setObjectName(u"problem_tab")
         self.problem_tab_layout = QVBoxLayout(self.problem_tab)
@@ -201,22 +205,20 @@ class Ui_MainWindow(object):
         self.input_widget_layout.setContentsMargins(0, 0, 0, 0)
         self.io_combo_box = QComboBox(self.input_widget)
         self.io_combo_box.setObjectName(u"io_combo_box")
+        sizePolicy3.setHeightForWidth(self.io_combo_box.sizePolicy().hasHeightForWidth())
+        self.io_combo_box.setSizePolicy(sizePolicy3)
 
         self.input_widget_layout.addWidget(self.io_combo_box)
 
         self.inputs_combo_box = QComboBox(self.input_widget)
         self.inputs_combo_box.setObjectName(u"inputs_combo_box")
-        sizePolicy7 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        sizePolicy7 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
         sizePolicy7.setHorizontalStretch(0)
         sizePolicy7.setVerticalStretch(0)
         sizePolicy7.setHeightForWidth(self.inputs_combo_box.sizePolicy().hasHeightForWidth())
         self.inputs_combo_box.setSizePolicy(sizePolicy7)
 
         self.input_widget_layout.addWidget(self.inputs_combo_box)
-
-        self.inputs_horizontal_spacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-
-        self.input_widget_layout.addItem(self.inputs_horizontal_spacer)
 
         self.new_input_push_button = QPushButton(self.input_widget)
         self.new_input_push_button.setObjectName(u"new_input_push_button")
@@ -274,8 +276,11 @@ class Ui_MainWindow(object):
 
         self.part_one_line_edit = QLineEdit(self.part_one_widget)
         self.part_one_line_edit.setObjectName(u"part_one_line_edit")
-        sizePolicy7.setHeightForWidth(self.part_one_line_edit.sizePolicy().hasHeightForWidth())
-        self.part_one_line_edit.setSizePolicy(sizePolicy7)
+        sizePolicy9 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        sizePolicy9.setHorizontalStretch(0)
+        sizePolicy9.setVerticalStretch(0)
+        sizePolicy9.setHeightForWidth(self.part_one_line_edit.sizePolicy().hasHeightForWidth())
+        self.part_one_line_edit.setSizePolicy(sizePolicy9)
         self.part_one_line_edit.setReadOnly(True)
 
         self.part_one_widget_layout.addWidget(self.part_one_line_edit)
@@ -309,8 +314,8 @@ class Ui_MainWindow(object):
 
         self.part_two_line_edit = QLineEdit(self.part_two_widget)
         self.part_two_line_edit.setObjectName(u"part_two_line_edit")
-        sizePolicy7.setHeightForWidth(self.part_two_line_edit.sizePolicy().hasHeightForWidth())
-        self.part_two_line_edit.setSizePolicy(sizePolicy7)
+        sizePolicy9.setHeightForWidth(self.part_two_line_edit.sizePolicy().hasHeightForWidth())
+        self.part_two_line_edit.setSizePolicy(sizePolicy9)
         self.part_two_line_edit.setReadOnly(True)
 
         self.part_two_widget_layout.addWidget(self.part_two_line_edit)
@@ -338,6 +343,24 @@ class Ui_MainWindow(object):
         self.leaderboards_tab = QWidget()
         self.leaderboards_tab.setObjectName(u"leaderboards_tab")
         self.tab_widget.addTab(self.leaderboards_tab, "")
+        self.overview_tab = QWidget()
+        self.overview_tab.setObjectName(u"overview_tab")
+        self.overview_tab_layout = QVBoxLayout(self.overview_tab)
+        self.overview_tab_layout.setSpacing(0)
+        self.overview_tab_layout.setObjectName(u"overview_tab_layout")
+        self.overview_tab_layout.setContentsMargins(0, 0, 0, 0)
+        self.overview_table_view = QTableView(self.overview_tab)
+        self.overview_table_view.setObjectName(u"overview_table_view")
+        self.overview_table_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.overview_table_view.setTabKeyNavigation(False)
+        self.overview_table_view.setProperty(u"showDropIndicator", False)
+        self.overview_table_view.setDragDropOverwriteMode(False)
+        self.overview_table_view.setSelectionMode(QAbstractItemView.NoSelection)
+        self.overview_table_view.setShowGrid(True)
+
+        self.overview_tab_layout.addWidget(self.overview_table_view)
+
+        self.tab_widget.addTab(self.overview_tab, "")
 
         self.central_widget_layout.addWidget(self.tab_widget)
 
@@ -348,12 +371,15 @@ class Ui_MainWindow(object):
         self.menu_session = QMenu(self.menu_bar)
         self.menu_session.setObjectName(u"menu_session")
         MainWindow.setMenuBar(self.menu_bar)
+        self.status_bar = QStatusBar(MainWindow)
+        self.status_bar.setObjectName(u"status_bar")
+        MainWindow.setStatusBar(self.status_bar)
 
         self.menu_bar.addAction(self.menu_session.menuAction())
         self.menu_session.addAction(self.action_open)
         self.menu_session.addAction(self.action_save)
         self.menu_session.addAction(self.action_save_as)
-        self.menu_session.addAction(self.action_refresh)
+        self.menu_session.addAction(self.action_refresh_session)
 
         self.retranslateUi(MainWindow)
 
@@ -368,9 +394,10 @@ class Ui_MainWindow(object):
         self.action_open.setText(QCoreApplication.translate("MainWindow", u"Open", None))
         self.action_save.setText(QCoreApplication.translate("MainWindow", u"Save", None))
         self.action_save_as.setText(QCoreApplication.translate("MainWindow", u"Save As...", None))
-        self.action_refresh.setText(QCoreApplication.translate("MainWindow", u"Refresh", None))
+        self.action_refresh_session.setText(QCoreApplication.translate("MainWindow", u"Refresh", None))
+        self.action_refresh_problem.setText(QCoreApplication.translate("MainWindow", u"Refresh", None))
 #if QT_CONFIG(tooltip)
-        self.refresh_push_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Refresh (F5)</p></body></html>", None))
+        self.refresh_push_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Refresh (U)</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.refresh_push_button.setText("")
         self.year_label.setText(QCoreApplication.translate("MainWindow", u"Year", None))
@@ -405,6 +432,7 @@ class Ui_MainWindow(object):
         self.copy_part_two_push_button.setText("")
         self.tab_widget.setTabText(self.tab_widget.indexOf(self.problem_tab), QCoreApplication.translate("MainWindow", u"Problem", None))
         self.tab_widget.setTabText(self.tab_widget.indexOf(self.leaderboards_tab), QCoreApplication.translate("MainWindow", u"Leaderboards", None))
+        self.tab_widget.setTabText(self.tab_widget.indexOf(self.overview_tab), QCoreApplication.translate("MainWindow", u"Overview", None))
         self.menu_session.setTitle(QCoreApplication.translate("MainWindow", u"Session", None))
     # retranslateUi
 

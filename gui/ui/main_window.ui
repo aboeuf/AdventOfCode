@@ -35,6 +35,9 @@
       <property name="currentIndex">
        <number>0</number>
       </property>
+      <property name="tabsClosable">
+       <bool>false</bool>
+      </property>
       <widget class="QWidget" name="problem_tab">
        <attribute name="title">
         <string>Problem</string>
@@ -100,7 +103,7 @@
               </size>
              </property>
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Refresh (F5)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Refresh (U)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string/>
@@ -352,12 +355,9 @@
                    <number>0</number>
                   </property>
                   <item>
-                   <widget class="QComboBox" name="io_combo_box"/>
-                  </item>
-                  <item>
-                   <widget class="QComboBox" name="inputs_combo_box">
+                   <widget class="QComboBox" name="io_combo_box">
                     <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
@@ -365,17 +365,14 @@
                    </widget>
                   </item>
                   <item>
-                   <spacer name="inputs_horizontal_spacer">
-                    <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                   <widget class="QComboBox" name="inputs_combo_box">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
                     </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>40</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                   </spacer>
+                   </widget>
                   </item>
                   <item>
                    <widget class="QPushButton" name="new_input_push_button">
@@ -638,6 +635,50 @@
         <string>Leaderboards</string>
        </attribute>
       </widget>
+      <widget class="QWidget" name="overview_tab">
+       <attribute name="title">
+        <string>Overview</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="overview_tab_layout">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QTableView" name="overview_table_view">
+          <property name="editTriggers">
+           <set>QAbstractItemView::NoEditTriggers</set>
+          </property>
+          <property name="tabKeyNavigation">
+           <bool>false</bool>
+          </property>
+          <property name="showDropIndicator" stdset="0">
+           <bool>false</bool>
+          </property>
+          <property name="dragDropOverwriteMode">
+           <bool>false</bool>
+          </property>
+          <property name="selectionMode">
+           <enum>QAbstractItemView::NoSelection</enum>
+          </property>
+          <property name="showGrid">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -658,10 +699,11 @@
     <addaction name="action_open"/>
     <addaction name="action_save"/>
     <addaction name="action_save_as"/>
-    <addaction name="action_refresh"/>
+    <addaction name="action_refresh_session"/>
    </widget>
    <addaction name="menu_session"/>
   </widget>
+  <widget class="QStatusBar" name="status_bar"/>
   <action name="action_open">
    <property name="text">
     <string>Open</string>
@@ -677,7 +719,12 @@
     <string>Save As...</string>
    </property>
   </action>
-  <action name="action_refresh">
+  <action name="action_refresh_session">
+   <property name="text">
+    <string>Refresh</string>
+   </property>
+  </action>
+  <action name="action_refresh_problem">
    <property name="text">
     <string>Refresh</string>
    </property>
