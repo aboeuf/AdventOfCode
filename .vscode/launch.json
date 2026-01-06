@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug GUI (Mixed Mode)",
+            "type": "python",
+            "request": "launch",
+            "module": "gui.main", 
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopOnEntry": false,
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}:${workspaceFolder}/build/cpp_solvers"
+            },
+            "enableNativeCodeDebugging": true
+        }
+    ]
+}

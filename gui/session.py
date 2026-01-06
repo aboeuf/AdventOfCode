@@ -1,3 +1,4 @@
+from .configuration import Configuration
 from datetime import datetime, timezone, timedelta
 import json
 from .problem import Problem
@@ -10,11 +11,11 @@ STARTING_YEAR = 2015
 MOUNTH = 12
 
 
-def get_now():
+def get_now() -> datetime:
     return datetime.now(EST_UTC5)
 
 
-def get_nb_puzzles_per_year(year):
+def get_nb_puzzles_per_year(year: int) -> int:
     if year < STARTING_YEAR:
         raise ValueError(f"Year {year} is too low. Starting year is {STARTING_YEAR}")
     now = get_now()
@@ -24,13 +25,13 @@ def get_nb_puzzles_per_year(year):
 
 
 class Session(dict):
-    def __init__(self, config, cookies):
+    def __init__(self, config: Configuration, cookies: dict):
         super().__init__()
         self.config = config
         self.modified = False
         self.cookies = cookies
 
-    def clean(self):
+    def clean(self) -> None:
         for year in self.keys():
             for day in self[year]:
                 if self[year][day].error is not None:
@@ -38,7 +39,7 @@ class Session(dict):
             if len(self[year]) == 0:
                 del self[year]
 
-    def get_missing_problems(self):
+    def get_missing_problems(self) -> list:
         now = get_now()
         missing_problems = []
         for year in range(STARTING_YEAR, now.year + 1):
@@ -53,7 +54,7 @@ class Session(dict):
                     missing_problems.append((year, day))
         return missing_problems
 
-    def download(self, main_window, problems):
+    def download(self, main_window, problems: list) -> None:
         nb_problems = len(problems)
         if nb_problems == 0:
             return
@@ -78,7 +79,7 @@ class Session(dict):
             QApplication.processEvents()
         progress.setValue(nb_problems)
 
-    def load(self, filepath):
+    def load(self, filepath: str) -> None:
         self.clear()
         with open(filepath, "r") as file:
             parsed_data = json.loads(file.read())
@@ -94,14 +95,14 @@ class Session(dict):
         self.config["session_path"] = filepath
         self.clean()
 
-    def export(self, filepath):
+    def export(self, filepath: str) -> None:
         with open(filepath, "w") as file:
             file.write(json.dumps(self, indent=4, sort_keys=""))
 
-    def save(self):
+    def save(self) -> None:
         self.export(self.config["session_path"])
         self.modified = False
 
-    def save_as(self, filepath):
+    def save_as(self, filepath: str) -> None:
         self.config["session_path"] = filepath
         self.save()

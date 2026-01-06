@@ -44,10 +44,10 @@ class Solvers(dict):
                 module = import_module(file_name[:-3])
                 self[year][day] = module.solve
 
-    def has(self, year, day):
+    def has(self, year: int, day: int) -> bool:
         return year in self and day in self[year]
 
-    def solve(self, year, day, input_str):
+    def solve(self, year: int, day: int, input_str: str) -> aoc.Result:
         if not self.has(year, day):
             return aoc.Result(f"Cannot find Python solver for year {year} day {day}")
         return aoc.Result(self[year][day](input_str))

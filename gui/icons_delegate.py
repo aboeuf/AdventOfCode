@@ -1,14 +1,17 @@
-from PySide6.QtWidgets import QStyledItemDelegate
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem, QWidget
+from PySide6.QtCore import Qt, QModelIndex, QSize
+from PySide6.QtGui import QIcon, QPainter
+
 
 class IconsDelegate(QStyledItemDelegate):
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget = None):
         super().__init__(parent)
         self.icon_size = 20
         self.spacing = 5
 
-    def paint(self, painter, option, index):
+    def paint(
+        self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex
+    ) -> None:
         icons = index.data(Qt.UserRole)
         if not icons or not isinstance(icons, list):
             return
@@ -23,6 +26,6 @@ class IconsDelegate(QStyledItemDelegate):
                 current_x += self.icon_size + self.spacing
         painter.restore()
 
-    def sizeHint(self, option, index):
+    def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
         width = (self.icon_size * 3) + (self.spacing * 4)
         return QSize(width, 30)

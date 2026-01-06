@@ -26,12 +26,12 @@ PROJECT_DIR = os.path.abspath(os.path.join(THIS_DIR, os.pardir))
 PROJECT_NAME = PROJECT_DIR.split("/")[-1]
 
 
-def get_paths():
+def get_paths() -> tuple:
     all_paths = []
     include_paths = [PROJECT_DIR]
     filtered = [os.path.join(PROJECT_DIR, path) for path in FILTERED_DIRECTORIES]
 
-    def add_filepath(filepath):
+    def add_filepath(filepath: str) -> None:
         nonlocal all_paths, include_paths
         extension = os.path.splitext(filepath)[1][1:]
         if extension not in ALL_EXTENSIONS:
@@ -45,7 +45,7 @@ def get_paths():
                     include_paths.append(current)
                 current = os.path.abspath(os.path.join(current, os.pardir))
 
-    def get_paths_recursive(path, depth=0):
+    def get_paths_recursive(path: str, depth: int = 0) -> None:
         if os.path.isfile(path):
             add_filepath(path)
             return
@@ -61,7 +61,7 @@ def get_paths():
     return (all_paths, include_paths)
 
 
-def main():
+def main() -> None:
     prog_name = sys.argv[0].split("/")[-1]
     parser = argparse.ArgumentParser(prog=prog_name, description=PARSER_ARGS["help"])
     parser.parse_args()

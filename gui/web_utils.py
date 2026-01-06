@@ -5,7 +5,7 @@ import traceback
 DOMAIN_NAME = "adventofcode.com"
 
 
-def get_cookies_from_chrome():
+def get_cookies_from_chrome() -> dict:
     try:
         cookies = dict()
         cookie_jar = browser_cookie3.chrome(domain_name=DOMAIN_NAME)
@@ -16,7 +16,7 @@ def get_cookies_from_chrome():
         traceback.print_exception(exc)
 
 
-def get_url(url, timeout=1.0, cookies=None):
+def get_url(url: str, timeout: float = 1.0, cookies: dict = None):
     try:
         kwargs = {"timeout": timeout}
         if cookies is not None:

@@ -1,7 +1,7 @@
 import os
 
 
-def get_parent_dirpath(path):
+def get_parent_dirpath(path: str) -> str:
     return os.path.abspath(os.path.join(path, os.pardir))
 
 

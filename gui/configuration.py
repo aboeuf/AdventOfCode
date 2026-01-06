@@ -20,7 +20,7 @@ class Configuration(dict):
         if "splitter_ratio" not in self:
             self["splitter_ratio"] = 0.75
 
-    def save(self):
+    def save(self) -> None:
         file = open(CONFIG_FILE_PATH, "w")
         file.write(json.dumps(self, indent=4, sort_keys=True))
         file.close()

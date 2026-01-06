@@ -12,23 +12,26 @@ VENV_DIR = os.path.join(THIS_DIR, "venv")
 BIN_DIR = os.path.join(VENV_DIR, "bin")
 
 
-def parse_commands():
+def parse_commands() -> dict:
     commands = {}
     for filename in os.listdir(SCRIPTS_DIR):
         filepath = os.path.join(SCRIPTS_DIR, filename)
         if os.path.isfile(filepath) and filename.endswith(".py"):
             modname = filename[:-3]
-            module = import_module(f"scripts.{modname}")
-            if module.__file__ != filepath:
-                raise Exception(
-                    f'unexpected module path "{module.__file__}" (expected "{filepath}")'
-                )
-            commands[modname] = module.PARSER_ARGS
-            commands[modname]["filepath"] = filepath
+            try:
+                module = import_module(f"scripts.{modname}")
+                if module.__file__ != filepath:
+                    raise Exception(
+                        f'unexpected module path "{module.__file__}" (expected "{filepath}")'
+                    )
+                commands[modname] = module.PARSER_ARGS
+                commands[modname]["filepath"] = filepath
+            except Exception as exc:
+                print(f"parse_commands: failed to import module '{modname}'")
     return commands
 
 
-def main():
+def main() -> None:
     prog_name = sys.argv[0].split("/")[-1]
 
     parser = argparse.ArgumentParser(prog=prog_name)

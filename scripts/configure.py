@@ -27,7 +27,7 @@ BUILD_DIR = os.path.join(PROJECT_DIR, "build")
 UI_DIR = os.path.join(PROJECT_DIR, "gui/ui")
 
 
-def main():
+def main() -> None:
     prog_name = sys.argv[0].split("/")[-1]
     parser = argparse.ArgumentParser(prog=prog_name, description=PARSER_ARGS["help"])
     for name, kwargs in PARSER_ARGS["args"]:

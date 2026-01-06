@@ -1,5 +1,4 @@
 browser_cookie3
 bs4
-python-lsp-server[all]
 PySide6
 requests

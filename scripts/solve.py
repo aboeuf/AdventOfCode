@@ -54,7 +54,7 @@ PARSER_ARGS = {
 }
 
 
-def solve(solver, year, day, input_str):
+def solve(solver: str, year: int, day: int, input_str: str) -> None:
     if solver == "cpp":
         if aoc.has_solver(year, day):
             return aoc.solve(year, day, input_str)
@@ -71,7 +71,7 @@ def solve(solver, year, day, input_str):
     print(f"Unknown solver {solver}")
 
 
-def main():
+def main() -> None:
     prog_name = sys.argv[0].split("/")[-1]
     parser = argparse.ArgumentParser(prog=prog_name, description=PARSER_ARGS["help"])
     for name, kwargs in PARSER_ARGS["args"]:

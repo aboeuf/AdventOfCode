@@ -14,7 +14,7 @@ if PROJECT_DIR not in sys.path:
     sys.path.append(PROJECT_DIR)
 
 
-def main():
+def main() -> None:
     prog_name = sys.argv[0].split("/")[-1]
     parser = argparse.ArgumentParser(prog=prog_name, description=PARSER_ARGS["help"])
     parser.parse_args()

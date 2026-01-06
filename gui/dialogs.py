@@ -1,13 +1,13 @@
-from PySide6.QtGui import QColor, QPalette
-from PySide6.QtWidgets import QDialog, QDialogButtonBox, QMessageBox
+from PySide6.QtGui import QColor, QIcon, QPalette
+from PySide6.QtWidgets import QComboBox, QDialog, QDialogButtonBox, QMessageBox
 from .ui.ui_new_input_dialog import Ui_NewInputDialog
 
 
 class StandardBoxes:
-    def __init__(self, window_icon):
+    def __init__(self, window_icon: QIcon):
         self.window_icon = window_icon
 
-    def ask(self, title, question):
+    def ask(self, title: str, question: str) -> bool:
         msg_box = QMessageBox()
         msg_box.setWindowIcon(self.window_icon)
         msg_box.setIcon(QMessageBox.Icon.Question)
@@ -18,7 +18,7 @@ class StandardBoxes:
         answer = msg_box.exec()
         return answer == QMessageBox.Yes
 
-    def warn(self, message):
+    def warn(self, message: str) -> int:
         msg_box = QMessageBox()
         msg_box.setWindowIcon(self.window_icon)
         msg_box.setIcon(QMessageBox.Icon.Warning)
@@ -29,14 +29,16 @@ class StandardBoxes:
 
 
 class NewInputDialog(QDialog, Ui_NewInputDialog):
-    def __init__(self, combox_box):
+    def __init__(self, combox_box: QComboBox):
         super().__init__()
         self.setupUi(self)
         self.default_name_changed = False
         for index in range(combox_box.count()):
             self.inputs_combo_box.addItem(combox_box.itemText(index))
         self.inputs_combo_box.setEnabled(False)
-        self.inputs_combo_box.currentIndexChanged.connect(self.on_duplicated_input_changed)
+        self.inputs_combo_box.currentIndexChanged.connect(
+            self.on_duplicated_input_changed
+        )
         self.duplicate_check_box.stateChanged.connect(self.on_check_box_state_changed)
 
         self.name_line_edit.setText(self.get_name())
@@ -44,8 +46,12 @@ class NewInputDialog(QDialog, Ui_NewInputDialog):
 
         self.name_line_edit.textChanged.connect(self.on_name_changed)
 
-    def get_default_name(self):
-        base_name = self.inputs_combo_box.currentText() if self.duplicate_check_box.isChecked() else "new input"
+    def get_default_name(self) -> str:
+        base_name = (
+            self.inputs_combo_box.currentText()
+            if self.duplicate_check_box.isChecked()
+            else "new input"
+        )
         if base_name.startswith("[AOC] "):
             base_name = base_name[6:]
         name = base_name
@@ -57,31 +63,39 @@ class NewInputDialog(QDialog, Ui_NewInputDialog):
                 name = base_name + f" ({i})"
         return name
 
-    def get_name(self):
-        return self.name_line_edit.text() if self.default_name_changed else self.get_default_name()
+    def get_name(self) -> str:
+        return (
+            self.name_line_edit.text()
+            if self.default_name_changed
+            else self.get_default_name()
+        )
 
-    def on_check_box_state_changed(self):
+    def on_check_box_state_changed(self) -> None:
         self.inputs_combo_box.setEnabled(self.duplicate_check_box.isChecked())
         self.name_line_edit.blockSignals(True)
         self.name_line_edit.setText(self.get_name())
         self.name_line_edit.blockSignals(False)
         self.check_valid()
 
-    def on_duplicated_input_changed(self):
+    def on_duplicated_input_changed(self) -> None:
         self.name_line_edit.blockSignals(True)
         self.name_line_edit.setText(self.get_name())
         self.name_line_edit.blockSignals(False)
         self.check_valid()
 
-    def on_name_changed(self):
+    def on_name_changed(self) -> None:
         self.default_name_changed = True
         self.check_valid()
 
-    def valid(self):
+    def valid(self) -> bool:
         name = self.get_name()
-        return len(name) > 0 and not name.startswith("[") and self.inputs_combo_box.findText(name) == -1
+        return (
+            len(name) > 0
+            and not name.startswith("[")
+            and self.inputs_combo_box.findText(name) == -1
+        )
 
-    def check_valid(self):
+    def check_valid(self) -> None:
         is_valid = self.valid()
         color = "black" if is_valid else "red"
         palette = self.name_line_edit.palette()

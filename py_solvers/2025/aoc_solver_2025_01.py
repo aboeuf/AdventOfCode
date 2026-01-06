@@ -1,4 +1,4 @@
-def solve(input_str):
+def solve(input_str: str) -> dict:
     first_secret_code = 0
     second_secret_code = 0
     dial_position = 50

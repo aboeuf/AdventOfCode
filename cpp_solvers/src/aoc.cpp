@@ -3,7 +3,11 @@
 namespace aoc {
 
 const auto solvers = std::unordered_map<int, std::unordered_map<int, Solver>>{
-    {2025, {{1, solver_2025_01}, {2, solver_2025_02}, {8, solver_2025_08}}}};
+    {2025,
+     {{1, solver_2025_01},
+      {2, solver_2025_02},
+      {3, solver_2025_03},
+      {8, solver_2025_08}}}};
 
 bool hasSolver(int year, int day) {
   const auto year_it = solvers.find(year);
