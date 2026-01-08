@@ -92,10 +92,11 @@ class Problem(dict):
             self["aoc_example_inputs"] = []
             pre_content = soup.find_all("pre")
             if pre_content is not None:
-                for input_example in pre_content:
-                    self["aoc_example_inputs"].append(
-                        input_example.get_text(strip=True)
-                    )
+                for input_example in [
+                    content.get_text(strip=True) for content in pre_content
+                ]:
+                    if input_example not in self["aoc_example_inputs"]:
+                        self["aoc_example_inputs"].append(input_example)
 
     def has_custom_input_with_name(self, name: str) -> bool:
         return "custom_inputs" in self and name in self["custom_inputs"]

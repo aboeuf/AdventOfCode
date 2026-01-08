@@ -3,6 +3,9 @@ add_library(cpp_solvers
     src/2025/solver_2025_01.cpp
     src/2025/solver_2025_02.cpp
     src/2025/solver_2025_03.cpp
+    src/2025/solver_2025_04.cpp
+    src/2025/solver_2025_05.cpp
+    src/2025/solver_2025_06.cpp
     src/2025/solver_2025_08.cpp
     src/aoc.cpp
     src/converters.cpp

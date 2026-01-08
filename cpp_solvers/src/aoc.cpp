@@ -7,6 +7,9 @@ const auto solvers = std::unordered_map<int, std::unordered_map<int, Solver>>{
      {{1, solver_2025_01},
       {2, solver_2025_02},
       {3, solver_2025_03},
+      {4, solver_2025_04},
+      {5, solver_2025_05},
+      {6, solver_2025_06},
       {8, solver_2025_08}}}};
 
 bool hasSolver(int year, int day) {
